@@ -79,8 +79,8 @@ public class rubik : MonoBehaviour {
 
         while (Mathf.Abs(currentRot.x - targetRot.x) > 1)
         {
-            rotatingPlane.transform.Rotate(90f * Time.deltaTime,0,0);
-            currentRot = rotatingPlane.transform.eulerAngles;
+            currentRot.x = Mathf.MoveTowardsAngle(currentRot.x, targetRot.x, 90f * Time.deltaTime);
+            rotatingPlane.transform.eulerAngles = currentRot;
             Debug.LogFormat("Target {0}, current {1}", targetRot.x, rotatingPlane.transform.rotation.eulerAngles);
             yield return null;
         }
