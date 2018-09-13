@@ -118,9 +118,6 @@ public class Rubik : MonoBehaviour {
             rotating.Block.transform.position = Position(rotatingPlane, positive, rotating.Position);
         }
 
-        // reset rotating plane for next rotation
-        // rotatingPlane.transform.rotation = Quaternion.Euler(0, 0, 0);
-        
         yield return null;
         rotating = false;
     }
