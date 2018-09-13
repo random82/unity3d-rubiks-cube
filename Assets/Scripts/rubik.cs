@@ -13,8 +13,6 @@ public class Rubik : MonoBehaviour {
         public Vector3 Position;
     }
 
-    private GameObject blockHolder;
-
     private IList<GameObject> blocks;
 
     private bool rotating = false;
@@ -28,7 +26,6 @@ public class Rubik : MonoBehaviour {
     // Use this for initialization
 	void Start() 
     {
-        blockHolder = GameObject.Find("Blocks");
         blocks = GameObject.FindGameObjectsWithTag("Block");
     }
 	
