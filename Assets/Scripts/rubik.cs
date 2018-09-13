@@ -119,7 +119,7 @@ public class Rubik : MonoBehaviour {
         }
 
         // reset rotating plane for next rotation
-        rotatingPlane.transform.rotation = Quaternion.Euler(0, 0, 0);
+        // rotatingPlane.transform.rotation = Quaternion.Euler(0, 0, 0);
         
         yield return null;
         rotating = false;
@@ -147,8 +147,8 @@ public class Rubik : MonoBehaviour {
         if (rotatingPlane.name.Contains("x")) //local x = global z, local y = global y
             return new Vector3(position.x, position.z * localYMod, position.y  * localXMod); 
 
-        if (rotatingPlane.name.Contains("y")) // local x = global x, local y = global z
-            return new Vector3(position.z * localXMod, position.y, position.x * localYMod);
+        if (rotatingPlane.name.Contains("y")) // local x = global z, local y = global x
+            return new Vector3(position.z * localYMod, position.y, position.x * localXMod);
 
         return new Vector3(position.y * localXMod, position.x * localYMod, position.z);
     }
