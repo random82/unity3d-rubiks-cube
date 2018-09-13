@@ -19,57 +19,62 @@ public class Rubik : MonoBehaviour {
 
     private bool rotating = false;
 
-    private static readonly Dictionary<string, Vector3> rotations = new Dictionary<string, Vector3> { { "yz", Vector3.left }, 
-                                                                                                      { "xz", Vector3.up }, 
-                                                                                                      { "xy", Vector3.forward }};
+    private static readonly Dictionary<char, Vector3> rotations = new Dictionary<char, Vector3> { 
+                                                                                                    { 'x', Vector3.left }, 
+                                                                                                    { 'y', Vector3.up }, 
+                                                                                                    { 'z', Vector3.forward }
+                                                                                                };
 
     // Use this for initialization
-	void Start() {
+	void Start() 
+    {
         blockHolder = GameObject.Find("Blocks");
         blocks = GameObject.FindGameObjectsWithTag("Block");
     }
 	
 	// Update is called once per frame
-	void Update () {
-
+	void Update () 
+    {
         if (rotating)
             return;
 
+        var positive = Input.GetKey("left shift") || Input.GetKey("right shift");
+
         if (Input.GetKeyDown("q"))
         {
-            StartCoroutine(Rotate("yz1", false));
+            StartCoroutine(Rotate("x1", positive));
         }
         else if (Input.GetKeyDown("w"))
         {
-            StartCoroutine(Rotate("xy1", false));
+            StartCoroutine(Rotate("x2", positive));
         }
         else if (Input.GetKeyDown("e"))
         {
-            StartCoroutine(Rotate("xz1", false));
+            StartCoroutine(Rotate("x3", positive));
         }
         if (Input.GetKeyDown("a"))
         {
-            StartCoroutine(Rotate("yz2", false));
+            StartCoroutine(Rotate("y1", positive));
         }
         else if (Input.GetKeyDown("s"))
         {
-            StartCoroutine(Rotate("xy2", false));
+            StartCoroutine(Rotate("y2", positive));
         }
         else if (Input.GetKeyDown("d"))
         {
-            StartCoroutine(Rotate("xz2", false));
+            StartCoroutine(Rotate("y3", positive));
         }
         if (Input.GetKeyDown("z"))
         {
-            StartCoroutine(Rotate("yz3", false));
+            StartCoroutine(Rotate("z1", positive));
         }
         else if (Input.GetKeyDown("x"))
         {
-            StartCoroutine(Rotate("xy3", false));
+            StartCoroutine(Rotate("z2", positive));
         }
         else if (Input.GetKeyDown("c"))
         {
-            StartCoroutine(Rotate("xz3", false));
+            StartCoroutine(Rotate("z3", positive));
         }
     }
 
@@ -78,15 +83,18 @@ public class Rubik : MonoBehaviour {
         rotating = true;
 
         var rotatingPlane = GameObject.Find(plane);
-        print(rotatingPlane);
         
         var rotatingBlocks = new List<BlockTransform>();
         foreach(var block in blocks)
         {
-            print(block.name);
             if (ShouldRotate(rotatingPlane, block))
             {
-                rotatingBlocks.Add(new BlockTransform { Block = block, Parent = block.transform.parent, Position = block.transform.position });
+                rotatingBlocks.Add(new BlockTransform { 
+                                                        Block = block, 
+                                                        Parent = block.transform.parent, 
+                                                        Position = block.transform.position 
+                                                      });
+                
                 block.transform.parent = rotatingPlane.transform;
             }
         }
@@ -94,12 +102,12 @@ public class Rubik : MonoBehaviour {
         var totalRotation = 0f;
         while (totalRotation < 90f)
         {
-            var currentRotation = 90f * Time.deltaTime;
+            var currentRotation = 90f * Time.deltaTime * 5;
             
             if (totalRotation + currentRotation > 90f)
                 currentRotation = 90f - totalRotation;
 
-            rotatingPlane.transform.Rotate(rotations[plane.Substring(0,2)], currentRotation * (positive ? 1 : -1));
+            rotatingPlane.transform.Rotate(rotations[plane[0]], currentRotation * (positive ? 1 : -1));
             totalRotation += currentRotation;
             yield return null;
         }
@@ -107,69 +115,41 @@ public class Rubik : MonoBehaviour {
         foreach(var rotating in rotatingBlocks)
         {
             rotating.Block.transform.parent = rotating.Parent;
-            rotating.Block.transform.position = Position(rotatingPlane, rotating.Position);
-            // rotating.Block.transform.rotation = rotatingPlane.transform.rotation;
-            // rotating.Block.transform.localScale = rotating.Transform.localScale;
+            rotating.Block.transform.position = Position(rotatingPlane, positive, rotating.Position);
         }
 
+        // reset rotating plane for next rotation
         rotatingPlane.transform.rotation = Quaternion.Euler(0, 0, 0);
+        
         yield return null;
-
         rotating = false;
     }
 
     private bool ShouldRotate(GameObject rotatingPlane, GameObject block)
     {
-        if (!rotatingPlane.name.Contains("x"))
-            return Math.Round(rotatingPlane.transform.position.x - block.transform.localPosition.x, 2) == 0;
+        if (rotatingPlane.name.Contains("x"))
+            return Math.Round(rotatingPlane.transform.position.x - block.transform.localPosition.x, 5) == 0;
 
-        if (!rotatingPlane.name.Contains("y"))
-            return Math.Round(rotatingPlane.transform.position.y - block.transform.localPosition.y, 2) == 0;
+        if (rotatingPlane.name.Contains("y"))
+            return Math.Round(rotatingPlane.transform.position.y - block.transform.localPosition.y, 5) == 0;
 
-        return Math.Round(rotatingPlane.transform.position.z - block.transform.localPosition.z, 2) == 0;
+        return Math.Round(rotatingPlane.transform.position.z - block.transform.localPosition.z, 5) == 0;
     }
 
-    private Vector3 Position(GameObject rotatingPlane, Vector3 position)
+    private Vector3 Position(GameObject rotatingPlane, bool positive, Vector3 position)
     {
-        if (!rotatingPlane.name.Contains("x"))
-            return new Vector3(position.x, -position.z, position.y);
+        //x = -y, y = x position modifier -> positive rotation
+        //x = y, y = -x position modifier -> negative rotation
 
-        if (!rotatingPlane.name.Contains("y"))
-            return new Vector3(-position.z, position.y, position.x);
+        var localXMod = positive ? -1 : 1;
+        var localYMod = positive ? 1 : -1;
 
-        return new Vector3(position.y, -position.x, position.z);
+        if (rotatingPlane.name.Contains("x")) //local x = global z, local y = global y
+            return new Vector3(position.x, position.z * localYMod, position.y  * localXMod); 
+
+        if (rotatingPlane.name.Contains("y")) // local x = global x, local y = global z
+            return new Vector3(position.z * localXMod, position.y, position.x * localYMod);
+
+        return new Vector3(position.y * localXMod, position.x * localYMod, position.z);
     }
-    
-    // private IEnumerator RotateLeftUp()
-    // {
-    //     if (rotating) { yield break; }
-
-    //     rotating = true;
-
-    //     var rotatingPlane = GameObject.Find("yz1");
-    //     var rotatingBlocks = blocks.Where(b => b.transform.position.x == -1/3f).ToList();
-
-    //     rotatingBlocks.ForEach(b => b.transform.parent = rotatingPlane.transform);
-
-    //     var currentRot = rotatingPlane.transform.eulerAngles;
-    //     var targetRot = rotatingPlane.transform.eulerAngles;
-    //     targetRot.x = Mathf.MoveTowardsAngle(targetRot.x, targetRot.x + 90f, 90f);
-
-    //     while (Mathf.Abs(currentRot.x - targetRot.x) > 1)
-    //     {
-    //         currentRot.x = Mathf.MoveTowardsAngle(currentRot.x, targetRot.x, 90f * Time.deltaTime);
-    //         rotatingPlane.transform.eulerAngles = currentRot;
-    //         Debug.LogFormat("Target {0}, current {1}", targetRot.x, rotatingPlane.transform.rotation.eulerAngles);
-    //         yield return null;
-    //     }
-
-    //     if(rotatingPlane.transform.rotation.x != targetRot.x)
-    //     {
-    //         rotatingPlane.transform.eulerAngles = targetRot;
-    //     }
-
-    //     rotatingBlocks.ForEach(b => b.transform.parent = transform);
-
-    //     rotating = false;
-    // }
 }
