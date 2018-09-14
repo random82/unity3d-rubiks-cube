@@ -32,33 +32,100 @@ public class Rubik : MonoBehaviour {
     }
 	
 	// Update is called once per frame
-	void Update () 
+	void Update ()
     {
         if (rotating)
             return;
 
-        var positive = Input.GetKey("left shift") || Input.GetKey("right shift");
+        var shift = Input.GetKey("left shift") || Input.GetKey("right shift");
+        LeftHandControls(shift);
+        RightHandRotations();
+    }
 
-        if (Input.GetKeyDown("q"))
+    private void RightHandRotations()
+    {
+        if (Input.GetKeyDown("y"))
         {
-            StartCoroutine(Rotate("x1", positive));
+            StartCoroutine(Rotate("z1", true));
         }
-        else if (Input.GetKeyDown("e"))
+        else if (Input.GetKeyDown("n"))
         {
-            StartCoroutine(Rotate("x3", positive));
+            StartCoroutine(Rotate("z1", false));
         }
-        if (Input.GetKeyDown("a"))
+        else if (Input.GetKeyDown("u"))
         {
-            StartCoroutine(Rotate("y1", positive));
-        }       
-        else if (Input.GetKeyDown("d"))
-        {
-            StartCoroutine(Rotate("y3", positive));
+            StartCoroutine(Rotate("z2", true));
         }
-        if (Input.GetKeyDown("z"))
+        else if (Input.GetKeyDown("m"))
         {
-            StartCoroutine(Rotate("z1", positive));
-        }       
+            StartCoroutine(Rotate("z2", false));
+        }
+        else if (Input.GetKeyDown("i"))
+        {
+            StartCoroutine(Rotate("z3", true));
+        }
+        else if (Input.GetKeyDown(","))
+        {
+            StartCoroutine(Rotate("z3", false));
+        }
+    }
+
+    private void LeftHandControls(bool shift)
+    {
+        if (!shift)
+        {
+            if (Input.GetKeyDown("q"))
+            {
+                StartCoroutine(Rotate("y1", true));
+            }
+            else if (Input.GetKeyDown("e") && !shift)
+            {
+                StartCoroutine(Rotate("y1", false));
+            }
+            if (Input.GetKeyDown("a"))
+            {
+                StartCoroutine(Rotate("y2", true));
+            }
+            else if (Input.GetKeyDown("d") && !shift)
+            {
+                StartCoroutine(Rotate("y2", false));
+            }
+            else if (Input.GetKeyDown("z") && !shift)
+            {
+                StartCoroutine(Rotate("y3", true));
+            }
+            else if (Input.GetKeyDown("c") && !shift)
+            {
+                StartCoroutine(Rotate("y3", false));
+            }
+        }
+        else
+        {
+            if (Input.GetKeyDown("q"))
+            {
+                StartCoroutine(Rotate("x1", false));
+            }
+            else if (Input.GetKeyDown("z"))
+            {
+                StartCoroutine(Rotate("x1", true));
+            }
+            if (Input.GetKeyDown("w"))
+            {
+                StartCoroutine(Rotate("x2", false));
+            }
+            else if (Input.GetKeyDown("x"))
+            {
+                StartCoroutine(Rotate("x2", true));
+            }
+            else if (Input.GetKeyDown("e"))
+            {
+                StartCoroutine(Rotate("x3", false));
+            }
+            else if (Input.GetKeyDown("c"))
+            {
+                StartCoroutine(Rotate("x3", true));
+            }
+        }
     }
 
     private IEnumerator Rotate(string plane, bool positive)
