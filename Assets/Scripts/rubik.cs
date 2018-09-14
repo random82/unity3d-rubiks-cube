@@ -39,34 +39,63 @@ public class Rubik : MonoBehaviour {
 
         var shift = Input.GetKey("left shift") || Input.GetKey("right shift");
         LeftHandControls(shift);
-        RightHandRotations();
+        RightHandRotations(shift);
     }
 
-    private void RightHandRotations()
+    private void RightHandRotations(bool shift)
     {
-        if (Input.GetKeyDown("y"))
+        if (!shift)
         {
-            StartCoroutine(Rotate("z1", true));
-        }
-        else if (Input.GetKeyDown("n"))
+            if (Input.GetKeyDown("y"))
+            {
+                StartCoroutine(Rotate("z1", true));
+            }
+            else if (Input.GetKeyDown("n"))
+            {
+                StartCoroutine(Rotate("z1", false));
+            }
+            else if (Input.GetKeyDown("u"))
+            {
+                StartCoroutine(Rotate("z2", true));
+            }
+            else if (Input.GetKeyDown("m"))
+            {
+                StartCoroutine(Rotate("z2", false));
+            }
+            else if (Input.GetKeyDown("i"))
+            {
+                StartCoroutine(Rotate("z3", true));
+            }
+            else if (Input.GetKeyDown(","))
+            {
+                StartCoroutine(Rotate("z3", false));
+            }
+        } else
         {
-            StartCoroutine(Rotate("z1", false));
-        }
-        else if (Input.GetKeyDown("u"))
-        {
-            StartCoroutine(Rotate("z2", true));
-        }
-        else if (Input.GetKeyDown("m"))
-        {
-            StartCoroutine(Rotate("z2", false));
-        }
-        else if (Input.GetKeyDown("i"))
-        {
-            StartCoroutine(Rotate("z3", true));
-        }
-        else if (Input.GetKeyDown(","))
-        {
-            StartCoroutine(Rotate("z3", false));
+            if (Input.GetKeyDown("y"))
+            {
+                StartCoroutine(Rotate("y1", true));
+            }
+            else if (Input.GetKeyDown("i"))
+            {
+                StartCoroutine(Rotate("y1", false));
+            }
+            if (Input.GetKeyDown("h"))
+            {
+                StartCoroutine(Rotate("y2", true));
+            }
+            else if (Input.GetKeyDown("k"))
+            {
+                StartCoroutine(Rotate("y2", false));
+            }
+            else if (Input.GetKeyDown("n"))
+            {
+                StartCoroutine(Rotate("y3", true));
+            }
+            else if (Input.GetKeyDown(","))
+            {
+                StartCoroutine(Rotate("y3", false));
+            }
         }
     }
 
