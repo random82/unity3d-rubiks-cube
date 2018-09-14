@@ -13,6 +13,8 @@ public class Rubik : MonoBehaviour {
         public Vector3 Position;
     }
 
+    public float Speed;
+
     private IList<GameObject> blocks;
 
     private bool rotating = false;
@@ -41,10 +43,6 @@ public class Rubik : MonoBehaviour {
         {
             StartCoroutine(Rotate("x1", positive));
         }
-        else if (Input.GetKeyDown("w"))
-        {
-            StartCoroutine(Rotate("x2", positive));
-        }
         else if (Input.GetKeyDown("e"))
         {
             StartCoroutine(Rotate("x3", positive));
@@ -52,11 +50,7 @@ public class Rubik : MonoBehaviour {
         if (Input.GetKeyDown("a"))
         {
             StartCoroutine(Rotate("y1", positive));
-        }
-        else if (Input.GetKeyDown("s"))
-        {
-            StartCoroutine(Rotate("y2", positive));
-        }
+        }       
         else if (Input.GetKeyDown("d"))
         {
             StartCoroutine(Rotate("y3", positive));
@@ -64,15 +58,7 @@ public class Rubik : MonoBehaviour {
         if (Input.GetKeyDown("z"))
         {
             StartCoroutine(Rotate("z1", positive));
-        }
-        else if (Input.GetKeyDown("x"))
-        {
-            StartCoroutine(Rotate("z2", positive));
-        }
-        else if (Input.GetKeyDown("c"))
-        {
-            StartCoroutine(Rotate("z3", positive));
-        }
+        }       
     }
 
     private IEnumerator Rotate(string plane, bool positive)
@@ -99,7 +85,7 @@ public class Rubik : MonoBehaviour {
         var totalRotation = 0f;
         while (totalRotation < 90f)
         {
-            var currentRotation = 90f * Time.deltaTime * 5;
+            var currentRotation = 90f * Time.deltaTime * Speed;
             
             if (totalRotation + currentRotation > 90f)
                 currentRotation = 90f - totalRotation;
