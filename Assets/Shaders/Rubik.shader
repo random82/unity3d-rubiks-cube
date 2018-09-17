@@ -1,46 +1,125 @@
 Shader "Custom/Rubik" {
-	Properties {
-		_Color ("Color", Color) = (1,1,1,1)
-		_MainTex ("Albedo (RGB)", 2D) = "white" {}
-		_Glossiness ("Smoothness", Range(0,1)) = 0.5
-		_Metallic ("Metallic", Range(0,1)) = 0.0
+	Properties{
+	  _Albedo("Albedo", Color) = (1,1,1,1)
+	  _Amount("Extrusion Amount", Range(0,0.01)) = 0
 	}
-	SubShader {
-		Tags { "RenderType"="Opaque" }
-		LOD 200
+	SubShader
+	{
+		Tags { "RenderType" = "Opaque" }
+		Cull Off
 
-		CGPROGRAM
-		// Physically based Standard lighting model, and enable shadows on all light types
-		#pragma surface surf Standard fullforwardshadows
+		Pass
+		{
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			#pragma geometry geom
 
-		// Use shader model 3.0 target, to get nicer looking lighting
-		#pragma target 3.0
+			#include "UnityCG.cginc"
 
-		sampler2D _MainTex;
+			struct v2g
+			{
+				float4 vertex : POSITION;
+				float3 normal : NORMAL;
+				float2 uv : TEXCOORD0;
+			};
 
-		struct Input {
-			float2 uv_MainTex;
-		};
+			struct g2f
+			{
+				float4 pos : SV_POSITION;
+				float2 uv : TEXCOORD0;
+				fixed4 col : COLOR;
+			};
 
-		fixed4 _Color;
+			sampler2D _MainTex;
+			float4 _MainTex_ST;
 
-		// Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
-		// See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
-		// #pragma instancing_options assumeuniformscaling
-		UNITY_INSTANCING_BUFFER_START(Props)
-			// put more per-instance properties here
-		UNITY_INSTANCING_BUFFER_END(Props)
+			v2g vert(appdata_base v)
+			{
+				v2g o;
+				o.vertex = v.vertex;
+				o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
+				o.normal = v.normal;
+				return o;
+			}
 
-		void surf (Input IN, inout SurfaceOutputStandard o) {
-			// Albedo comes from a texture tinted by color
-			fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
-			o.Albedo = c.rgb * o.Normal;
-			// Metallic and smoothness come from slider variables
-			o.Alpha = c.a;
-      
+			float _Factor;
 
+			[maxvertexcount(24)]
+			void geom(triangle v2g IN[3], inout TriangleStream<g2f> tristream)
+			{
+				g2f o;
+
+				float3 edgeA = IN[1].vertex - IN[0].vertex;
+				float3 edgeB = IN[2].vertex - IN[0].vertex;
+				float3 normalFace = normalize(cross(edgeA, edgeB));
+
+				for (int i = 0; i < 3; i++)
+				{
+					o.pos = UnityObjectToClipPos(IN[i].vertex);
+					o.uv = IN[i].uv;
+					o.col = fixed4(0., 0., 0., 1.);
+					tristream.Append(o);
+
+					o.pos = UnityObjectToClipPos(IN[i].vertex + float4(normalFace, 0) * _Factor);
+					o.uv = IN[i].uv;
+					o.col = fixed4(1., 1., 1., 1.);
+					tristream.Append(o);
+
+					int inext = (i + 1) % 3;
+
+					o.pos = UnityObjectToClipPos(IN[inext].vertex);
+					o.uv = IN[inext].uv;
+					o.col = fixed4(0., 0., 0., 1.);
+					tristream.Append(o);
+
+					tristream.RestartStrip();
+
+					o.pos = UnityObjectToClipPos(IN[i].vertex + float4(normalFace, 0) * _Factor);
+					o.uv = IN[i].uv;
+					o.col = fixed4(1., 1., 1., 1.);
+					tristream.Append(o);
+
+					o.pos = UnityObjectToClipPos(IN[inext].vertex);
+					o.uv = IN[inext].uv;
+					o.col = fixed4(0., 0., 0., 1.);
+					tristream.Append(o);
+
+					o.pos = UnityObjectToClipPos(IN[inext].vertex + float4(normalFace, 0) * _Factor);
+					o.uv = IN[inext].uv;
+					o.col = fixed4(1., 1., 1., 1.);
+					tristream.Append(o);
+
+					tristream.RestartStrip();
+				}
+
+				for (int i = 0; i < 3; i++)
+				{
+					o.pos = UnityObjectToClipPos(IN[i].vertex + float4(normalFace, 0) * _Factor);
+					o.uv = IN[i].uv;
+					o.col = fixed4(1., 1., 1., 1.);
+					tristream.Append(o);
+				}
+
+				tristream.RestartStrip();
+
+				for (int i = 0; i < 3; i++)
+				{
+					o.pos = UnityObjectToClipPos(IN[i].vertex);
+					o.uv = IN[i].uv;
+					o.col = fixed4(0., 0., 0., 1.);
+					tristream.Append(o);
+				}
+
+				tristream.RestartStrip();
+			}
+
+			fixed4 frag(g2f i) : SV_Target
+			{
+				fixed4 col = tex2D(_MainTex, i.uv) * i.col;
+				return col;
+			}
+			ENDCG
 		}
-		ENDCG
 	}
-	FallBack "Diffuse"
 }
