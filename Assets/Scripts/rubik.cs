@@ -13,7 +13,12 @@ public class Rubik : MonoBehaviour {
         public Vector3 Position;
     }
 
+    public float Speed;
+
     private IList<GameObject> blocks;
+
+    private int planeNumber;
+    private GameObject selectedPlane;
 
     private bool rotating = false;
 
@@ -27,64 +32,81 @@ public class Rubik : MonoBehaviour {
 	void Start() 
     {
         blocks = GameObject.FindGameObjectsWithTag("Block");
+        selectedPlane = GameObject.Find("y1");
     }
 	
 	// Update is called once per frame
-	void Update () 
+	void Update ()
     {
         if (rotating)
             return;
 
-        var positive = Input.GetKey("left shift") || Input.GetKey("right shift");
+        if (Input.GetKeyDown("s"))
+        {
+            ShiftPlane("y", 1);
+        }
 
-        if (Input.GetKeyDown("q"))
+        if (Input.GetKeyDown("w"))
         {
-            StartCoroutine(Rotate("x1", positive));
+            ShiftPlane("y", -1);
         }
-        else if (Input.GetKeyDown("w"))
+        
+        else if (Input.GetKeyDown("a"))
         {
-            StartCoroutine(Rotate("x2", positive));
+            ShiftPlane("z", -1);
         }
-        else if (Input.GetKeyDown("e"))
-        {
-            StartCoroutine(Rotate("x3", positive));
-        }
-        if (Input.GetKeyDown("a"))
-        {
-            StartCoroutine(Rotate("y1", positive));
-        }
-        else if (Input.GetKeyDown("s"))
-        {
-            StartCoroutine(Rotate("y2", positive));
-        }
+
         else if (Input.GetKeyDown("d"))
         {
-            StartCoroutine(Rotate("y3", positive));
+            ShiftPlane("z", 1);
         }
-        if (Input.GetKeyDown("z"))
+        
+        else if (Input.GetKeyDown("q"))
         {
-            StartCoroutine(Rotate("z1", positive));
+            ShiftPlane("x", -1);
         }
-        else if (Input.GetKeyDown("x"))
+        
+        else if (Input.GetKeyDown("e"))
         {
-            StartCoroutine(Rotate("z2", positive));
+            ShiftPlane("x", 1);
         }
-        else if (Input.GetKeyDown("c"))
+
+        else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            StartCoroutine(Rotate("z3", positive));
+            StartCoroutine(Rotate(true));
+        }
+
+        else if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            StartCoroutine(Rotate(false));
         }
     }
 
-    private IEnumerator Rotate(string plane, bool positive)
+    private void ShiftPlane(string plane, int increment)
+    {
+        selectedPlane.GetComponent<Renderer>().enabled = false;
+
+        if (selectedPlane.name[0] != plane[0])
+            planeNumber = 0;
+
+        planeNumber += increment;
+        
+        if (planeNumber > 3) planeNumber = 1;
+        if (planeNumber < 1) planeNumber = 3;
+
+        selectedPlane = GameObject.Find(plane + planeNumber);
+
+        selectedPlane.GetComponent<Renderer>().enabled = true;
+    }
+
+    private IEnumerator Rotate(bool positive)
     {
         rotating = true;
 
-        var rotatingPlane = GameObject.Find(plane);
-        
         var rotatingBlocks = new List<BlockTransform>();
         foreach(var block in blocks)
         {
-            if (ShouldRotate(rotatingPlane, block))
+            if (ShouldRotate(block))
             {
                 rotatingBlocks.Add(new BlockTransform { 
                                                         Block = block, 
@@ -92,19 +114,20 @@ public class Rubik : MonoBehaviour {
                                                         Position = block.transform.position 
                                                       });
                 
-                block.transform.parent = rotatingPlane.transform;
+                block.transform.parent = selectedPlane.transform;
             }
         }
         
+        print(rotatingBlocks.Count);
         var totalRotation = 0f;
         while (totalRotation < 90f)
         {
-            var currentRotation = 90f * Time.deltaTime * 5;
+            var currentRotation = 90f * Time.deltaTime * Speed;
             
             if (totalRotation + currentRotation > 90f)
                 currentRotation = 90f - totalRotation;
 
-            rotatingPlane.transform.Rotate(rotations[plane[0]], currentRotation * (positive ? 1 : -1));
+            selectedPlane.transform.Rotate(rotations[selectedPlane.name[0]], currentRotation * (positive ? 1 : -1));
             totalRotation += currentRotation;
             yield return null;
         }
@@ -112,25 +135,25 @@ public class Rubik : MonoBehaviour {
         foreach(var rotating in rotatingBlocks)
         {
             rotating.Block.transform.parent = rotating.Parent;
-            rotating.Block.transform.position = Position(rotatingPlane, positive, rotating.Position);
+            rotating.Block.transform.position = Position(positive, rotating.Position);
         }
 
         yield return null;
         rotating = false;
     }
 
-    private bool ShouldRotate(GameObject rotatingPlane, GameObject block)
+    private bool ShouldRotate(GameObject block)
     {
-        if (rotatingPlane.name.Contains("x"))
-            return Math.Round(rotatingPlane.transform.position.x - block.transform.localPosition.x, 5) == 0;
+        if (selectedPlane.name.Contains("x"))
+            return Math.Round(selectedPlane.transform.position.x - block.transform.localPosition.x, 5) == 0;
 
-        if (rotatingPlane.name.Contains("y"))
-            return Math.Round(rotatingPlane.transform.position.y - block.transform.localPosition.y, 5) == 0;
+        if (selectedPlane.name.Contains("y"))
+            return Math.Round(selectedPlane.transform.position.y - block.transform.localPosition.y, 5) == 0;
 
-        return Math.Round(rotatingPlane.transform.position.z - block.transform.localPosition.z, 5) == 0;
+        return Math.Round(selectedPlane.transform.position.z - block.transform.localPosition.z, 5) == 0;
     }
 
-    private Vector3 Position(GameObject rotatingPlane, bool positive, Vector3 position)
+    private Vector3 Position(bool positive, Vector3 position)
     {
         //x = -y, y = x position modifier -> positive rotation
         //x = y, y = -x position modifier -> negative rotation
@@ -138,10 +161,10 @@ public class Rubik : MonoBehaviour {
         var localXMod = positive ? -1 : 1;
         var localYMod = positive ? 1 : -1;
 
-        if (rotatingPlane.name.Contains("x")) //local x = global z, local y = global y
+        if (selectedPlane.name.Contains("x")) //local x = global z, local y = global y
             return new Vector3(position.x, position.z * localYMod, position.y  * localXMod); 
 
-        if (rotatingPlane.name.Contains("y")) // local x = global z, local y = global x
+        if (selectedPlane.name.Contains("y")) // local x = global z, local y = global x
             return new Vector3(position.z * localYMod, position.y, position.x * localXMod);
 
         return new Vector3(position.y * localXMod, position.x * localYMod, position.z);
